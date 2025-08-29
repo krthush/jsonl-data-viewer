@@ -77,6 +77,35 @@ export default function TextConverter() {
     }
   }
 
+  const isValidJSONL = (text: string): boolean => {
+    const lines = text
+      .trim()
+      .split("\n")
+      .filter((line) => line.trim())
+    if (lines.length <= 1) return false
+
+    return lines.every((line) => {
+      try {
+        JSON.parse(line.trim())
+        return true
+      } catch {
+        return false
+      }
+    })
+  }
+
+  const processJSONL = (jsonlString: string): any[] => {
+    try {
+      const lines = jsonlString
+        .trim()
+        .split("\n")
+        .filter((line) => line.trim())
+      return lines.map((line) => JSON.parse(line.trim()))
+    } catch {
+      return []
+    }
+  }
+
   const processJSON = (jsonString: string): any => {
     try {
       return JSON.parse(jsonString.trim())
@@ -85,16 +114,29 @@ export default function TextConverter() {
     }
   }
 
-  const isJSON = isValidJSON(inputText)
-  const convertedText = isJSON ? null : inputText.replace(/\\n/g, "\n")
+  const isJSONL = isValidJSONL(inputText)
+  const isJSON = !isJSONL && isValidJSON(inputText)
+  const convertedText = isJSON || isJSONL ? null : inputText.replace(/\\n/g, "\n")
   const jsonData = isJSON ? processJSON(inputText) : null
+  const jsonlData = isJSONL ? processJSONL(inputText) : null
 
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Newline Character Converter</h1>
-          <p className="text-muted-foreground">Convert literal \n characters to actual line breaks in text or JSON</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">JSONL Data Viewer</h1>
+          <p className="text-muted-foreground">
+            View and explore JSONL training data with newline conversion - ideal for reviewing fine-tuning datasets for
+            models on platforms like{" "}
+            <a
+              href="https://platform.openai.com/finetune"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              OpenAI Platform
+            </a>
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -105,6 +147,7 @@ export default function TextConverter() {
                 <CardTitle className="flex items-center gap-2">
                   Input Text
                   <span className="text-sm font-normal text-muted-foreground">(with \n characters)</span>
+                  {isJSONL && <Badge variant="secondary">JSONL Detected</Badge>}
                   {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
                 </CardTitle>
                 <Button
@@ -129,7 +172,7 @@ export default function TextConverter() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="input-text">Enter text or JSON with literal \n characters:</Label>
+                <Label htmlFor="input-text">Enter text, JSON, or JSONL with literal \n characters:</Label>
                 <Textarea
                   id="input-text"
                   placeholder={`Text example: Hello\\nWorld\\nThis is a test
@@ -138,7 +181,11 @@ JSON example:
 {
   "message": "Hello\\nWorld",
   "description": "Line 1\\nLine 2\\nLine 3"
-}`}
+}
+
+JSONL example:
+{"message": "Hello\\nWorld", "id": 1}
+{"message": "Another\\nLine", "id": 2}`}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   className={`font-mono text-sm transition-all duration-200 resize-none ${
@@ -155,16 +202,37 @@ JSON example:
               <CardTitle className="flex items-center gap-2">
                 Converted Output
                 <span className="text-sm font-normal text-muted-foreground">
-                  ({isJSON ? "interactive JSON with newlines" : "with actual newlines"})
+                  (
+                  {isJSONL
+                    ? "interactive JSONL with newlines"
+                    : isJSON
+                      ? "interactive JSON with newlines"
+                      : "with actual newlines"}
+                  )
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <Label htmlFor="output-text">
-                  {isJSON ? "Interactive JSON with converted newlines:" : "Converted text with actual line breaks:"}
+                  {isJSONL
+                    ? "Interactive JSONL with converted newlines:"
+                    : isJSON
+                      ? "Interactive JSON with converted newlines:"
+                      : "Converted text with actual line breaks:"}
                 </Label>
-                {isJSON && jsonData ? (
+                {isJSONL && jsonlData ? (
+                  <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
+                    {jsonlData.map((item, index) => (
+                      <div key={index} className="border-l-4 border-blue-500 pl-4">
+                        <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
+                          Line {index + 1}
+                        </div>
+                        <JSONRenderer data={item} />
+                      </div>
+                    ))}
+                  </div>
+                ) : isJSON && jsonData ? (
                   <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
                     <JSONRenderer data={jsonData} />
                   </div>
@@ -186,11 +254,22 @@ JSON example:
           <div className="inline-flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 px-4 py-2 rounded-lg">
             <span>Input: {inputText.length} characters</span>
             <span>•</span>
-            <span>Output: {isJSON ? "Interactive JSON" : `${convertedText?.length || 0} characters`}</span>
-            {!isJSON && (
+            <span>
+              Output:{" "}
+              {isJSONL ? "Interactive JSONL" : isJSON ? "Interactive JSON" : `${convertedText?.length || 0} characters`}
+            </span>
+            {!isJSON && !isJSONL && (
               <>
                 <span>•</span>
                 <span>Lines: {convertedText?.split("\n").length || 0}</span>
+              </>
+            )}
+            {isJSONL && (
+              <>
+                <span>•</span>
+                <span className="text-blue-600 dark:text-blue-400">
+                  JSONL Format ({jsonlData?.length || 0} objects)
+                </span>
               </>
             )}
             {isJSON && (
