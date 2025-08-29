@@ -29,7 +29,14 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="font-mono text-purple-600 dark:text-purple-400">Array ({data.length} items)</span>
         </CollapsibleTrigger>
-        <CollapsibleContent className="ml-4 mt-2 space-y-2">
+        <CollapsibleContent className="ml-4 mt-2 space-y-2 relative">
+          {isOpen && (
+            <div
+              className="absolute left-0 top-0 bottom-0 w-2 bg-muted hover:bg-muted-foreground/20 cursor-pointer transition-colors"
+              onClick={() => setIsOpen(false)}
+              title="Click to collapse"
+            />
+          )}
           {data.map((item, index) => (
             <div key={index} className="border-l-2 border-muted pl-3">
               <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
@@ -49,7 +56,14 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="font-mono text-green-600 dark:text-green-400">Object ({entries.length} properties)</span>
         </CollapsibleTrigger>
-        <CollapsibleContent className="ml-4 mt-2 space-y-2">
+        <CollapsibleContent className="ml-4 mt-2 space-y-2 relative">
+          {isOpen && (
+            <div
+              className="absolute left-0 top-0 bottom-0 w-2 bg-muted hover:bg-muted-foreground/20 cursor-pointer transition-colors"
+              onClick={() => setIsOpen(false)}
+              title="Click to collapse"
+            />
+          )}
           {entries.map(([key, value]) => (
             <div key={key} className="border-l-2 border-muted pl-3">
               <div className="text-sm font-semibold text-orange-600 dark:text-orange-400 mb-1">{key}:</div>
