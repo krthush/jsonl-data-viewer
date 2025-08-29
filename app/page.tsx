@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight, Expand, Minimize } from "lucide-react"
 
 const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
@@ -65,6 +66,7 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
 
 export default function TextConverter() {
   const [inputText, setInputText] = useState("")
+  const [isInputExpanded, setIsInputExpanded] = useState(false)
 
   const isValidJSON = (text: string): boolean => {
     try {
@@ -89,21 +91,41 @@ export default function TextConverter() {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Newline Character Converter</h1>
           <p className="text-muted-foreground">Convert literal \n characters to actual line breaks in text or JSON</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
           {/* Input Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Input Text
-                <span className="text-sm font-normal text-muted-foreground">(with \n characters)</span>
-                {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  Input Text
+                  <span className="text-sm font-normal text-muted-foreground">(with \n characters)</span>
+                  {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsInputExpanded(!isInputExpanded)}
+                  className="flex items-center gap-2"
+                >
+                  {isInputExpanded ? (
+                    <>
+                      <Minimize className="h-4 w-4" />
+                      Collapse
+                    </>
+                  ) : (
+                    <>
+                      <Expand className="h-4 w-4" />
+                      Expand
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -119,7 +141,9 @@ JSON example:
 }`}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  className="min-h-[300px] font-mono text-sm"
+                  className={`font-mono text-sm transition-all duration-200 resize-none ${
+                    isInputExpanded ? "min-h-[300px]" : "h-20 max-h-20"
+                  }`}
                 />
               </div>
             </CardContent>
