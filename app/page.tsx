@@ -124,7 +124,7 @@ export default function TextConverter() {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">JSONL Data Viewer</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">JSONL Data Viewer - Training Data Inspector</h1>
           <p className="text-muted-foreground">
             View and explore JSONL training data with newline conversion - ideal for reviewing fine-tuning datasets for
             models on platforms like{" "}
