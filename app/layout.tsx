@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   description:
     "View and explore JSONL training data for fine-tuning AI models. Perfect for reviewing datasets before uploading to OpenAI Platform.",
   generator: "v0.app",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 }
 
 export default function RootLayout({
