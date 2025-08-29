@@ -25,7 +25,7 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   if (Array.isArray(data)) {
     return (
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded">
+        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="font-mono text-purple-600 dark:text-purple-400">Array ({data.length} items)</span>
         </CollapsibleTrigger>
@@ -52,7 +52,7 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
     const entries = Object.entries(data)
     return (
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded">
+        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="font-mono text-green-600 dark:text-green-400">Object ({entries.length} properties)</span>
         </CollapsibleTrigger>
