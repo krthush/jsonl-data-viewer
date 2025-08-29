@@ -1,0 +1,183 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { ChevronDown, ChevronRight } from "lucide-react"
+
+const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
+  const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
+
+  if (typeof data === "string") {
+    // Convert \n to actual newlines for display
+    const convertedString = data.replace(/\\n/g, "\n")
+    return <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap">"{convertedString}"</div>
+  }
+
+  if (typeof data === "number" || typeof data === "boolean" || data === null) {
+    return <span className="text-blue-600 dark:text-blue-400 font-mono">{JSON.stringify(data)}</span>
+  }
+
+  if (Array.isArray(data)) {
+    return (
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded">
+          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <span className="font-mono text-purple-600 dark:text-purple-400">Array ({data.length} items)</span>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="ml-4 mt-2 space-y-2">
+          {data.map((item, index) => (
+            <div key={index} className="border-l-2 border-muted pl-3">
+              <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
+              <JSONRenderer data={item} level={level + 1} />
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+    )
+  }
+
+  if (typeof data === "object" && data !== null) {
+    const entries = Object.entries(data)
+    return (
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded">
+          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <span className="font-mono text-green-600 dark:text-green-400">Object ({entries.length} properties)</span>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="ml-4 mt-2 space-y-2">
+          {entries.map(([key, value]) => (
+            <div key={key} className="border-l-2 border-muted pl-3">
+              <div className="text-sm font-semibold text-orange-600 dark:text-orange-400 mb-1">{key}:</div>
+              <JSONRenderer data={value} level={level + 1} />
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+    )
+  }
+
+  return <span>{JSON.stringify(data)}</span>
+}
+
+export default function TextConverter() {
+  const [inputText, setInputText] = useState("")
+
+  const isValidJSON = (text: string): boolean => {
+    try {
+      JSON.parse(text.trim())
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const processJSON = (jsonString: string): any => {
+    try {
+      return JSON.parse(jsonString.trim())
+    } catch {
+      return null
+    }
+  }
+
+  const isJSON = isValidJSON(inputText)
+  const convertedText = isJSON ? null : inputText.replace(/\\n/g, "\n")
+  const jsonData = isJSON ? processJSON(inputText) : null
+
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Newline Character Converter</h1>
+          <p className="text-muted-foreground">Convert literal \n characters to actual line breaks in text or JSON</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Input Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Input Text
+                <span className="text-sm font-normal text-muted-foreground">(with \n characters)</span>
+                {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="input-text">Enter text or JSON with literal \n characters:</Label>
+                <Textarea
+                  id="input-text"
+                  placeholder={`Text example: Hello\\nWorld\\nThis is a test
+
+JSON example:
+{
+  "message": "Hello\\nWorld",
+  "description": "Line 1\\nLine 2\\nLine 3"
+}`}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  className="min-h-[300px] font-mono text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Output Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Converted Output
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({isJSON ? "interactive JSON with newlines" : "with actual newlines"})
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="output-text">
+                  {isJSON ? "Interactive JSON with converted newlines:" : "Converted text with actual line breaks:"}
+                </Label>
+                {isJSON && jsonData ? (
+                  <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
+                    <JSONRenderer data={jsonData} />
+                  </div>
+                ) : (
+                  <Textarea
+                    id="output-text"
+                    value={convertedText || ""}
+                    readOnly
+                    className="min-h-[300px] font-mono text-sm bg-muted/50"
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Character Count Info */}
+        <div className="mt-6 text-center">
+          <div className="inline-flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 px-4 py-2 rounded-lg">
+            <span>Input: {inputText.length} characters</span>
+            <span>•</span>
+            <span>Output: {isJSON ? "Interactive JSON" : `${convertedText?.length || 0} characters`}</span>
+            {!isJSON && (
+              <>
+                <span>•</span>
+                <span>Lines: {convertedText?.split("\n").length || 0}</span>
+              </>
+            )}
+            {isJSON && (
+              <>
+                <span>•</span>
+                <span className="text-blue-600 dark:text-blue-400">JSON Format</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
