@@ -13,9 +13,8 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
 
   if (typeof data === "string") {
-    // Convert \n to actual newlines for display
     const convertedString = data.replace(/\\n/g, "\n")
-    return <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap">"{convertedString}"</div>
+    return <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap">{convertedString}</div>
   }
 
   if (typeof data === "number" || typeof data === "boolean" || data === null) {
