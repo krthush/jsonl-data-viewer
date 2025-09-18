@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -7,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronRight, Expand, Minimize } from "lucide-react"
+import { ChevronDown, ChevronRight, Expand, Minimize, Upload } from "lucide-react"
 
 const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
@@ -127,6 +129,18 @@ export default function TextConverter() {
     }
   }
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const content = e.target?.result as string
+        setInputText(content)
+      }
+      reader.readAsText(file)
+    }
+  }
+
   const isJSONL = isValidJSONL(inputText)
   const isJSON = !isJSONL && isValidJSON(inputText)
   const convertedText = isJSON || isJSONL ? null : inputText.replace(/\\n/g, "\n")
@@ -163,24 +177,41 @@ export default function TextConverter() {
                   {isJSONL && <Badge variant="secondary">JSONL Detected</Badge>}
                   {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
                 </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsInputExpanded(!isInputExpanded)}
-                  className="flex items-center gap-2"
-                >
-                  {isInputExpanded ? (
-                    <>
-                      <Minimize className="h-4 w-4" />
-                      Collapse
-                    </>
-                  ) : (
-                    <>
-                      <Expand className="h-4 w-4" />
-                      Expand
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".jsonl,.json,.txt"
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      id="file-upload"
+                    />
+                    <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent" asChild>
+                      <label htmlFor="file-upload" className="cursor-pointer">
+                        <Upload className="h-4 w-4" />
+                        Upload File
+                      </label>
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsInputExpanded(!isInputExpanded)}
+                    className="flex items-center gap-2"
+                  >
+                    {isInputExpanded ? (
+                      <>
+                        <Minimize className="h-4 w-4" />
+                        Collapse
+                      </>
+                    ) : (
+                      <>
+                        <Expand className="h-4 w-4" />
+                        Expand
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
