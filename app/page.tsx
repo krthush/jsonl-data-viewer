@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronRight, Expand, Minimize, Upload } from "lucide-react"
+import { ChevronDown, ChevronRight, Expand, Minimize, Upload } from 'lucide-react'
 
 const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
@@ -148,78 +148,79 @@ export default function TextConverter() {
   const jsonlData = isJSONL ? processJSONL(inputText) : null
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto px-2">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">JSONL Data Viewer - Training Data Inspector</h1>
-          <p className="text-muted-foreground">
-            View and explore JSONL training data with newline conversion - ideal for reviewing fine-tuning datasets for
-            models on platforms like{" "}
-            <a
-              href="https://platform.openai.com/finetune"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              OpenAI Platform
-            </a>
-          </p>
-        </div>
+    <div className="min-h-screen bg-background p-6 flex flex-col">
+      <div className="flex-1">
+        <div className="max-w-7xl mx-auto px-2">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">JSONL Data Viewer - Training Data Inspector</h1>
+            <p className="text-muted-foreground">
+              View and explore JSONL training data with newline conversion - ideal for reviewing fine-tuning datasets for
+              models on platforms like{" "}
+              <a
+                href="https://platform.openai.com/finetune"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                OpenAI Platform
+              </a>
+            </p>
+          </div>
 
-        <div className="space-y-4">
-          {/* Input Section */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  Input Text
-                  <span className="text-sm font-normal text-muted-foreground">(with \n characters)</span>
-                  {isJSONL && <Badge variant="secondary">JSONL Detected</Badge>}
-                  {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept=".jsonl,.json,.txt"
-                      onChange={handleFileUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      id="file-upload"
-                    />
-                    <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent" asChild>
-                      <label htmlFor="file-upload" className="cursor-pointer">
-                        <Upload className="h-4 w-4" />
-                        Upload File
-                      </label>
+          <div className="space-y-4">
+            {/* Input Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    Input Text
+                    <span className="text-sm font-normal text-muted-foreground">(with \n characters)</span>
+                    {isJSONL && <Badge variant="secondary">JSONL Detected</Badge>}
+                    {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".jsonl,.json,.txt"
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        id="file-upload"
+                      />
+                      <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent" asChild>
+                        <label htmlFor="file-upload" className="cursor-pointer">
+                          <Upload className="h-4 w-4" />
+                          Upload File
+                        </label>
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsInputExpanded(!isInputExpanded)}
+                      className="flex items-center gap-2"
+                    >
+                      {isInputExpanded ? (
+                        <>
+                          <Minimize className="h-4 w-4" />
+                          Collapse
+                        </>
+                      ) : (
+                        <>
+                          <Expand className="h-4 w-4" />
+                          Expand
+                        </>
+                      )}
                     </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsInputExpanded(!isInputExpanded)}
-                    className="flex items-center gap-2"
-                  >
-                    {isInputExpanded ? (
-                      <>
-                        <Minimize className="h-4 w-4" />
-                        Collapse
-                      </>
-                    ) : (
-                      <>
-                        <Expand className="h-4 w-4" />
-                        Expand
-                      </>
-                    )}
-                  </Button>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="input-text">Enter text, JSON, or JSONL with literal \n characters:</Label>
-                <Textarea
-                  id="input-text"
-                  placeholder={`Text example: Hello\\nWorld\\nThis is a test
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="input-text">Enter text, JSON, or JSONL with literal \n characters:</Label>
+                  <Textarea
+                    id="input-text"
+                    placeholder={`Text example: Hello\\nWorld\\nThis is a test
 
 JSON example:
 {
@@ -230,99 +231,110 @@ JSON example:
 JSONL example:
 {"message": "Hello\\nWorld", "id": 1}
 {"message": "Another\\nLine", "id": 2}`}
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  className={`font-mono text-sm transition-all duration-200 resize-none ${
-                    isInputExpanded ? "min-h-[300px]" : "h-20 max-h-20"
-                  }`}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Output Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Converted Output
-                <span className="text-sm font-normal text-muted-foreground">
-                  (
-                  {isJSONL
-                    ? "interactive JSONL with newlines"
-                    : isJSON
-                      ? "interactive JSON with newlines"
-                      : "with actual newlines"}
-                  )
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="output-text">
-                  {isJSONL
-                    ? "Interactive JSONL with converted newlines:"
-                    : isJSON
-                      ? "Interactive JSON with converted newlines:"
-                      : "Converted text with actual line breaks:"}
-                </Label>
-                {isJSONL && jsonlData ? (
-                  <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
-                    {jsonlData.map((item, index) => (
-                      <div key={index} className="border-l-4 border-blue-500 pl-4">
-                        <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                          Line {index + 1}
-                        </div>
-                        <JSONRenderer data={item} />
-                      </div>
-                    ))}
-                  </div>
-                ) : isJSON && jsonData ? (
-                  <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
-                    <JSONRenderer data={jsonData} />
-                  </div>
-                ) : (
-                  <Textarea
-                    id="output-text"
-                    value={convertedText || ""}
-                    readOnly
-                    className="min-h-[300px] font-mono text-sm bg-muted/50"
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    className={`font-mono text-sm transition-all duration-200 resize-none ${
+                      isInputExpanded ? "min-h-[300px]" : "h-20 max-h-20"
+                    }`}
                   />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Character Count Info */}
-        <div className="mt-6 text-center">
-          <div className="inline-flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 px-4 py-2 rounded-lg">
-            <span>Input: {inputText.length} characters</span>
-            <span>•</span>
-            <span>
-              Output:{" "}
-              {isJSONL ? "Interactive JSONL" : isJSON ? "Interactive JSON" : `${convertedText?.length || 0} characters`}
-            </span>
-            {!isJSON && !isJSONL && (
-              <>
-                <span>•</span>
-                <span>Lines: {convertedText?.split("\n").length || 0}</span>
-              </>
-            )}
-            {isJSONL && (
-              <>
-                <span>•</span>
-                <span className="text-blue-600 dark:text-blue-400">
-                  JSONL Format ({jsonlData?.length || 0} objects)
-                </span>
-              </>
-            )}
-            {isJSON && (
-              <>
-                <span>•</span>
-                <span className="text-blue-600 dark:text-blue-400">JSON Format</span>
-              </>
-            )}
+            {/* Output Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Converted Output
+                  <span className="text-sm font-normal text-muted-foreground">
+                    (
+                    {isJSONL
+                      ? "interactive JSONL with newlines"
+                      : isJSON
+                        ? "interactive JSON with newlines"
+                        : "with actual newlines"}
+                    )
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="output-text">
+                    {isJSONL
+                      ? "Interactive JSONL with converted newlines:"
+                      : isJSON
+                        ? "Interactive JSON with converted newlines:"
+                        : "Converted text with actual line breaks:"}
+                  </Label>
+                  {isJSONL && jsonlData ? (
+                    <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
+                      {jsonlData.map((item, index) => (
+                        <div key={index} className="border-l-4 border-blue-500 pl-4">
+                          <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
+                            Line {index + 1}
+                          </div>
+                          <JSONRenderer data={item} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : isJSON && jsonData ? (
+                    <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
+                      <JSONRenderer data={jsonData} />
+                    </div>
+                  ) : (
+                    <Textarea
+                      id="output-text"
+                      value={convertedText || ""}
+                      readOnly
+                      className="min-h-[300px] font-mono text-sm bg-muted/50"
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Character Count Info */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 px-4 py-2 rounded-lg">
+              <span>Input: {inputText.length} characters</span>
+              <span>•</span>
+              <span>
+                Output:{" "}
+                {isJSONL ? "Interactive JSONL" : isJSON ? "Interactive JSON" : `${convertedText?.length || 0} characters`}
+              </span>
+              {!isJSON && !isJSONL && (
+                <>
+                  <span>•</span>
+                  <span>Lines: {convertedText?.split("\n").length || 0}</span>
+                </>
+              )}
+              {isJSONL && (
+                <>
+                  <span>•</span>
+                  <span className="text-blue-600 dark:text-blue-400">
+                    JSONL Format ({jsonlData?.length || 0} objects)
+                  </span>
+                </>
+              )}
+              {isJSON && (
+                <>
+                  <span>•</span>
+                  <span className="text-blue-600 dark:text-blue-400">JSON Format</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-12 text-center border-t pt-6">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <span>Made with love from the</span>
+          <a href="https://faved.com/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+            <img src="/faved-logo.png" alt="Faved" className="h-6" />
+          </a>
+          <span>team</span>
         </div>
       </div>
     </div>
