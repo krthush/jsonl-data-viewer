@@ -9,14 +9,39 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronRight, Expand, Minimize, Upload } from 'lucide-react'
+import { ChevronDown, ChevronRight, Expand, Minimize, Upload } from "lucide-react"
+
+const MAX_STRING_LENGTH = 100
+
+const StringValue = ({ value }: { value: string }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const convertedString = value.replace(/\\n/g, "\n")
+  const shouldTruncate = convertedString.length > MAX_STRING_LENGTH
+
+  if (!shouldTruncate) {
+    return <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap">{convertedString}</div>
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap">
+        {isExpanded ? convertedString : `${convertedString.substring(0, MAX_STRING_LENGTH)}...`}
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+      >
+        {isExpanded ? "See less" : "See more"}
+      </button>
+    </div>
+  )
+}
 
 const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
 
   if (typeof data === "string") {
-    const convertedString = data.replace(/\\n/g, "\n")
-    return <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap">{convertedString}</div>
+    return <StringValue value={data} />
   }
 
   if (typeof data === "number" || typeof data === "boolean" || data === null) {
@@ -154,8 +179,8 @@ export default function TextConverter() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">JSONL Data Viewer - Training Data Inspector</h1>
             <p className="text-muted-foreground">
-              View and explore JSONL training data with newline conversion - ideal for reviewing fine-tuning datasets for
-              models on platforms like{" "}
+              View and explore JSONL training data with newline conversion - ideal for reviewing fine-tuning datasets
+              for models on platforms like{" "}
               <a
                 href="https://platform.openai.com/finetune"
                 target="_blank"
@@ -301,7 +326,11 @@ JSONL example:
               <span>•</span>
               <span>
                 Output:{" "}
-                {isJSONL ? "Interactive JSONL" : isJSON ? "Interactive JSON" : `${convertedText?.length || 0} characters`}
+                {isJSONL
+                  ? "Interactive JSONL"
+                  : isJSON
+                    ? "Interactive JSON"
+                    : `${convertedText?.length || 0} characters`}
               </span>
               {!isJSON && !isJSONL && (
                 <>
@@ -331,7 +360,12 @@ JSONL example:
       <div className="mt-12 text-center border-t pt-6">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <span>Made with love from the</span>
-          <a href="https://faved.com/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+          <a
+            href="https://faved.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:opacity-80 transition-opacity"
+          >
             <img src="/faved-logo.png" alt="Faved" className="h-6" />
           </a>
           <span>team</span>
