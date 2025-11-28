@@ -23,16 +23,28 @@ const StringValue = ({ value }: { value: string }) => {
   }
 
   return (
-    <div className="space-y-2">
-      <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap">
-        {isExpanded ? convertedString : `${convertedString.substring(0, MAX_STRING_LENGTH)}...`}
-      </div>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-      >
-        {isExpanded ? "See less" : "See more"}
-      </button>
+    <div className="bg-muted/30 p-2 rounded text-sm font-mono whitespace-pre-wrap space-y-1">
+      {isExpanded ? (
+        convertedString
+      ) : (
+        <>
+          <div>{convertedString.substring(0, MAX_STRING_LENGTH)}...</div>
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+          >
+            See more
+          </button>
+        </>
+      )}
+      {isExpanded && (
+        <button
+          onClick={() => setIsExpanded(false)}
+          className="block text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+        >
+          See less
+        </button>
+      )}
     </div>
   )
 }
