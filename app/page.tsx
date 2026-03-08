@@ -49,14 +49,28 @@ const StringValue = ({ value }: { value: string }) => {
   )
 }
 
-const TRIM_OPTIONS = [5, 10, 20, 50, 100]
+const TRIM_OPTIONS = [1, 5, 10, 20, 50, 100]
 
-const ArrayRenderer = ({ data, level }: { data: any[]; level: number }) => {
+const ArrayRenderer = ({
+  data,
+  level,
+  onUpdateInput,
+}: {
+  data: any[]
+  level: number
+  onUpdateInput?: (trimmedData: any[]) => void
+}) => {
   const [isOpen, setIsOpen] = useState(level < 2)
   const [trimLimit, setTrimLimit] = useState<number | null>(null)
 
   const displayedItems = trimLimit ? data.slice(0, trimLimit) : data
   const isTrimmed = trimLimit !== null && trimLimit < data.length
+
+  const handleUpdateInput = () => {
+    if (onUpdateInput && trimLimit) {
+      onUpdateInput(displayedItems)
+    }
+  }
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -67,7 +81,7 @@ const ArrayRenderer = ({ data, level }: { data: any[]; level: number }) => {
             Array ({isTrimmed ? `${trimLimit} of ${data.length}` : `${data.length}`} items)
           </span>
         </CollapsibleTrigger>
-        {data.length > 5 && (
+        {data.length > 1 && (
           <div className="flex items-center gap-1 text-xs">
             <span className="text-muted-foreground">Show:</span>
             {TRIM_OPTIONS.filter((n) => n < data.length).map((n) => (
@@ -93,6 +107,14 @@ const ArrayRenderer = ({ data, level }: { data: any[]; level: number }) => {
             >
               All
             </button>
+            {isTrimmed && onUpdateInput && (
+              <button
+                onClick={handleUpdateInput}
+                className="ml-2 px-2 py-0.5 rounded cursor-pointer transition-colors bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Update Input
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -126,7 +148,15 @@ const ArrayRenderer = ({ data, level }: { data: any[]; level: number }) => {
   )
 }
 
-const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
+const JSONRenderer = ({
+  data,
+  level = 0,
+  onUpdateInput,
+}: {
+  data: any
+  level?: number
+  onUpdateInput?: (trimmedData: any[]) => void
+}) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
 
   if (typeof data === "string") {
@@ -138,7 +168,7 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   }
 
   if (Array.isArray(data)) {
-    return <ArrayRenderer data={data} level={level} />
+    return <ArrayRenderer data={data} level={level} onUpdateInput={onUpdateInput} />
   }
 
   if (typeof data === "object" && data !== null) {
@@ -238,6 +268,17 @@ export default function TextConverter() {
   const convertedText = isJSON || isJSONL ? null : inputText.replace(/\\n/g, "\n")
   const jsonData = isJSON ? processJSON(inputText) : null
   const jsonlData = isJSONL ? processJSONL(inputText) : null
+
+  const handleUpdateInputFromArray = (trimmedData: any[]) => {
+    if (isJSONL) {
+      // Convert trimmed array back to JSONL format
+      const newJsonl = trimmedData.map((item) => JSON.stringify(item)).join("\n")
+      setInputText(newJsonl)
+    } else if (isJSON) {
+      // For JSON, just stringify the trimmed array
+      setInputText(JSON.stringify(trimmedData, null, 2))
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background p-6 flex flex-col">
@@ -365,13 +406,13 @@ JSONL example:
                           <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
                             Line {index + 1}
                           </div>
-                          <JSONRenderer data={item} />
+                          <JSONRenderer data={item} onUpdateInput={handleUpdateInputFromArray} />
                         </div>
                       ))}
                     </div>
                   ) : isJSON && jsonData ? (
                     <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
-                      <JSONRenderer data={jsonData} />
+                      <JSONRenderer data={jsonData} onUpdateInput={handleUpdateInputFromArray} />
                     </div>
                   ) : (
                     <Textarea
