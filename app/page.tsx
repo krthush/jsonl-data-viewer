@@ -98,19 +98,15 @@ const ArrayRenderer = ({
     setTrimLimit(n === trimLimit && !isSingleItemMode ? null : n)
   }
 
+  const hiddenCount = isSingleItemMode ? data.length - 1 : trimLimit ? data.length - trimLimit : 0
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="flex items-center gap-2 flex-wrap">
         <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="font-mono text-purple-600 dark:text-purple-400">
-            Array (
-            {isSingleItemMode
-              ? `item ${singleItemIndex} of ${data.length}`
-              : isTrimmed
-                ? `${trimLimit} of ${data.length}`
-                : `${data.length}`}{" "}
-            items)
+            Array ({isTrimmed ? `${displayedItems.length} of ${data.length}` : `${data.length}`} items)
           </span>
         </CollapsibleTrigger>
         {data.length > 1 && (
@@ -164,7 +160,7 @@ const ArrayRenderer = ({
             <div key={actualIndex} className="border-l-2 border-muted pl-3">
               <div className="text-xs text-muted-foreground mb-1 flex items-center gap-2">
                 <span>[{actualIndex}]</span>
-                {!isSingleItemMode && data.length > 1 && (
+                {displayedItems.length > 1 && data.length > 1 && (
                   <button
                     onClick={() => handleShowThisOnly(actualIndex)}
                     className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
@@ -177,11 +173,14 @@ const ArrayRenderer = ({
             </div>
           )
         })}
-        {!isSingleItemMode && isTrimmed && (
+        {isTrimmed && hiddenCount > 0 && (
           <div className="text-xs text-muted-foreground pl-3 py-2">
-            ... and {data.length - trimLimit!} more items.{" "}
+            ... and {hiddenCount} more items.{" "}
             <button
-              onClick={() => setTrimLimit(null)}
+              onClick={() => {
+                setSingleItemIndex(null)
+                setTrimLimit(null)
+              }}
               className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
             >
               Show all
@@ -478,7 +477,7 @@ JSONL example:
                         : "Converted text with actual line breaks:"}
                   </Label>
                   {isJSONL && jsonlData ? (
-                    <div key={`${defaultDepth}-${renderKey}`} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
+                    <div key={renderKey} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
                       {jsonlData.map((item, index) => (
                         <div key={index} className="border-l-4 border-blue-500 pl-4">
                           <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
@@ -489,7 +488,7 @@ JSONL example:
                       ))}
                     </div>
                   ) : isJSON && jsonData ? (
-                    <div key={`${defaultDepth}-${renderKey}`} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
+                    <div key={renderKey} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
                       <JSONRenderer data={jsonData} onUpdateInput={handleUpdateInputFromArray} defaultDepth={defaultDepth} />
                     </div>
                   ) : (
