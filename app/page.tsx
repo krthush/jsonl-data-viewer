@@ -55,21 +55,43 @@ const ArrayRenderer = ({
   data,
   level,
   onUpdateInput,
+  defaultDepth = 1,
 }: {
   data: any[]
   level: number
   onUpdateInput?: (trimmedData: any[]) => void
+  defaultDepth?: number
 }) => {
-  const [isOpen, setIsOpen] = useState(level < 2)
+  const [isOpen, setIsOpen] = useState(level < defaultDepth + 1)
   const [trimLimit, setTrimLimit] = useState<number | null>(null)
+  const [singleItemIndex, setSingleItemIndex] = useState<number | null>(null)
 
-  const displayedItems = trimLimit ? data.slice(0, trimLimit) : data
-  const isTrimmed = trimLimit !== null && trimLimit < data.length
+  const isSingleItemMode = singleItemIndex !== null
+  const displayedItems = isSingleItemMode
+    ? [data[singleItemIndex]]
+    : trimLimit
+      ? data.slice(0, trimLimit)
+      : data
+  const isTrimmed = (trimLimit !== null && trimLimit < data.length) || isSingleItemMode
 
   const handleUpdateInput = () => {
-    if (onUpdateInput && trimLimit) {
+    if (onUpdateInput) {
       onUpdateInput(displayedItems)
     }
+  }
+
+  const handleShowThisOnly = (index: number) => {
+    setSingleItemIndex(index)
+    setTrimLimit(null)
+  }
+
+  const handleClearSingleItem = () => {
+    setSingleItemIndex(null)
+  }
+
+  const handleTrimSelect = (n: number | null) => {
+    setSingleItemIndex(null)
+    setTrimLimit(n === trimLimit ? null : n)
   }
 
   return (
@@ -78,7 +100,13 @@ const ArrayRenderer = ({
         <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="font-mono text-purple-600 dark:text-purple-400">
-            Array ({isTrimmed ? `${trimLimit} of ${data.length}` : `${data.length}`} items)
+            Array (
+            {isSingleItemMode
+              ? `item ${singleItemIndex} of ${data.length}`
+              : isTrimmed
+                ? `${trimLimit} of ${data.length}`
+                : `${data.length}`}{" "}
+            items)
           </span>
         </CollapsibleTrigger>
         {data.length > 1 && (
@@ -87,9 +115,9 @@ const ArrayRenderer = ({
             {TRIM_OPTIONS.filter((n) => n < data.length).map((n) => (
               <button
                 key={n}
-                onClick={() => setTrimLimit(trimLimit === n ? null : n)}
+                onClick={() => handleTrimSelect(n)}
                 className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                  trimLimit === n
+                  trimLimit === n && !isSingleItemMode
                     ? "bg-purple-600 text-white"
                     : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
                 }`}
@@ -98,9 +126,9 @@ const ArrayRenderer = ({
               </button>
             ))}
             <button
-              onClick={() => setTrimLimit(null)}
+              onClick={() => handleTrimSelect(null)}
               className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                trimLimit === null
+                trimLimit === null && !isSingleItemMode
                   ? "bg-purple-600 text-white"
                   : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
               }`}
@@ -126,15 +154,39 @@ const ArrayRenderer = ({
             title="Click to collapse"
           />
         )}
-        {displayedItems.map((item, index) => (
-          <div key={index} className="border-l-2 border-muted pl-3">
-            <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
-            <JSONRenderer data={item} level={level + 1} />
+        {isSingleItemMode && (
+          <div className="text-xs text-muted-foreground pl-3 py-1 flex items-center gap-2">
+            <span>Showing only item [{singleItemIndex}]</span>
+            <button
+              onClick={handleClearSingleItem}
+              className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+            >
+              Show all
+            </button>
           </div>
-        ))}
-        {isTrimmed && (
+        )}
+        {displayedItems.map((item, displayIndex) => {
+          const actualIndex = isSingleItemMode ? singleItemIndex! : displayIndex
+          return (
+            <div key={actualIndex} className="border-l-2 border-muted pl-3">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-2">
+                <span>[{actualIndex}]</span>
+                {!isSingleItemMode && data.length > 1 && (
+                  <button
+                    onClick={() => handleShowThisOnly(actualIndex)}
+                    className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+                  >
+                    Show This Only
+                  </button>
+                )}
+              </div>
+              <JSONRenderer data={item} level={level + 1} defaultDepth={defaultDepth} />
+            </div>
+          )
+        })}
+        {!isSingleItemMode && isTrimmed && (
           <div className="text-xs text-muted-foreground pl-3 py-2">
-            ... and {data.length - trimLimit} more items.{" "}
+            ... and {data.length - trimLimit!} more items.{" "}
             <button
               onClick={() => setTrimLimit(null)}
               className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
@@ -152,12 +204,14 @@ const JSONRenderer = ({
   data,
   level = 0,
   onUpdateInput,
+  defaultDepth = 1,
 }: {
   data: any
   level?: number
   onUpdateInput?: (trimmedData: any[]) => void
+  defaultDepth?: number
 }) => {
-  const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
+  const [isOpen, setIsOpen] = useState(level < defaultDepth + 1)
 
   if (typeof data === "string") {
     return <StringValue value={data} />
@@ -168,7 +222,7 @@ const JSONRenderer = ({
   }
 
   if (Array.isArray(data)) {
-    return <ArrayRenderer data={data} level={level} onUpdateInput={onUpdateInput} />
+    return <ArrayRenderer data={data} level={level} onUpdateInput={onUpdateInput} defaultDepth={defaultDepth} />
   }
 
   if (typeof data === "object" && data !== null) {
@@ -190,7 +244,7 @@ const JSONRenderer = ({
           {entries.map(([key, value]) => (
             <div key={key} className="border-l-2 border-muted pl-3">
               <div className="text-sm font-semibold text-orange-600 dark:text-orange-400 mb-1">{key}:</div>
-              <JSONRenderer data={value} level={level + 1} />
+              <JSONRenderer data={value} level={level + 1} defaultDepth={defaultDepth} />
             </div>
           ))}
         </CollapsibleContent>
@@ -201,9 +255,17 @@ const JSONRenderer = ({
   return <span>{JSON.stringify(data)}</span>
 }
 
+const DEPTH_OPTIONS = [
+  { value: 0, label: "0" },
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: Infinity, label: "All" },
+]
+
 export default function TextConverter() {
   const [inputText, setInputText] = useState("")
   const [isInputExpanded, setIsInputExpanded] = useState(false)
+  const [defaultDepth, setDefaultDepth] = useState(1)
 
   const isValidJSON = (text: string): boolean => {
     try {
@@ -377,18 +439,38 @@ JSONL example:
             {/* Output Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Converted Output
-                  <span className="text-sm font-normal text-muted-foreground">
-                    (
-                    {isJSONL
-                      ? "interactive JSONL with newlines"
-                      : isJSON
-                        ? "interactive JSON with newlines"
-                        : "with actual newlines"}
-                    )
-                  </span>
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    Converted Output
+                    <span className="text-sm font-normal text-muted-foreground">
+                      (
+                      {isJSONL
+                        ? "interactive JSONL with newlines"
+                        : isJSON
+                          ? "interactive JSON with newlines"
+                          : "with actual newlines"}
+                      )
+                    </span>
+                  </CardTitle>
+                  {(isJSONL || isJSON) && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">Default Output Depth:</span>
+                      {DEPTH_OPTIONS.map((option) => (
+                        <button
+                          key={option.label}
+                          onClick={() => setDefaultDepth(option.value)}
+                          className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
+                            defaultDepth === option.value
+                              ? "bg-purple-600 text-white"
+                              : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -400,19 +482,19 @@ JSONL example:
                         : "Converted text with actual line breaks:"}
                   </Label>
                   {isJSONL && jsonlData ? (
-                    <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
+                    <div key={defaultDepth} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
                       {jsonlData.map((item, index) => (
                         <div key={index} className="border-l-4 border-blue-500 pl-4">
                           <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
                             Line {index + 1}
                           </div>
-                          <JSONRenderer data={item} onUpdateInput={handleUpdateInputFromArray} />
+                          <JSONRenderer data={item} onUpdateInput={handleUpdateInputFromArray} defaultDepth={defaultDepth} />
                         </div>
                       ))}
                     </div>
                   ) : isJSON && jsonData ? (
-                    <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
-                      <JSONRenderer data={jsonData} onUpdateInput={handleUpdateInputFromArray} />
+                    <div key={defaultDepth} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
+                      <JSONRenderer data={jsonData} onUpdateInput={handleUpdateInputFromArray} defaultDepth={defaultDepth} />
                     </div>
                   ) : (
                     <Textarea
