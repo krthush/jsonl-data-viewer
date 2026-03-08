@@ -62,14 +62,34 @@ const ArrayRenderer = ({
 }) => {
   const [isOpen, setIsOpen] = useState(level < 2)
   const [trimLimit, setTrimLimit] = useState<number | null>(null)
+  const [singleItemIndex, setSingleItemIndex] = useState<number | null>(null)
 
-  const displayedItems = trimLimit ? data.slice(0, trimLimit) : data
-  const isTrimmed = trimLimit !== null && trimLimit < data.length
+  const isSingleItemMode = singleItemIndex !== null
+  const displayedItems = isSingleItemMode
+    ? [data[singleItemIndex]]
+    : trimLimit
+      ? data.slice(0, trimLimit)
+      : data
+  const isTrimmed = (trimLimit !== null && trimLimit < data.length) || isSingleItemMode
 
   const handleUpdateInput = () => {
-    if (onUpdateInput && trimLimit) {
+    if (onUpdateInput) {
       onUpdateInput(displayedItems)
     }
+  }
+
+  const handleShowThisOnly = (index: number) => {
+    setSingleItemIndex(index)
+    setTrimLimit(null)
+  }
+
+  const handleClearSingleItem = () => {
+    setSingleItemIndex(null)
+  }
+
+  const handleTrimSelect = (n: number | null) => {
+    setSingleItemIndex(null)
+    setTrimLimit(n === trimLimit ? null : n)
   }
 
   return (
@@ -78,7 +98,13 @@ const ArrayRenderer = ({
         <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="font-mono text-purple-600 dark:text-purple-400">
-            Array ({isTrimmed ? `${trimLimit} of ${data.length}` : `${data.length}`} items)
+            Array (
+            {isSingleItemMode
+              ? `item ${singleItemIndex} of ${data.length}`
+              : isTrimmed
+                ? `${trimLimit} of ${data.length}`
+                : `${data.length}`}{" "}
+            items)
           </span>
         </CollapsibleTrigger>
         {data.length > 1 && (
@@ -87,9 +113,9 @@ const ArrayRenderer = ({
             {TRIM_OPTIONS.filter((n) => n < data.length).map((n) => (
               <button
                 key={n}
-                onClick={() => setTrimLimit(trimLimit === n ? null : n)}
+                onClick={() => handleTrimSelect(n)}
                 className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                  trimLimit === n
+                  trimLimit === n && !isSingleItemMode
                     ? "bg-purple-600 text-white"
                     : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
                 }`}
@@ -98,9 +124,9 @@ const ArrayRenderer = ({
               </button>
             ))}
             <button
-              onClick={() => setTrimLimit(null)}
+              onClick={() => handleTrimSelect(null)}
               className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                trimLimit === null
+                trimLimit === null && !isSingleItemMode
                   ? "bg-purple-600 text-white"
                   : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
               }`}
@@ -126,15 +152,39 @@ const ArrayRenderer = ({
             title="Click to collapse"
           />
         )}
-        {displayedItems.map((item, index) => (
-          <div key={index} className="border-l-2 border-muted pl-3">
-            <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
-            <JSONRenderer data={item} level={level + 1} />
+        {isSingleItemMode && (
+          <div className="text-xs text-muted-foreground pl-3 py-1 flex items-center gap-2">
+            <span>Showing only item [{singleItemIndex}]</span>
+            <button
+              onClick={handleClearSingleItem}
+              className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+            >
+              Show all
+            </button>
           </div>
-        ))}
-        {isTrimmed && (
+        )}
+        {displayedItems.map((item, displayIndex) => {
+          const actualIndex = isSingleItemMode ? singleItemIndex! : displayIndex
+          return (
+            <div key={actualIndex} className="border-l-2 border-muted pl-3">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-2">
+                <span>[{actualIndex}]</span>
+                {!isSingleItemMode && data.length > 1 && (
+                  <button
+                    onClick={() => handleShowThisOnly(actualIndex)}
+                    className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+                  >
+                    Show This Only
+                  </button>
+                )}
+              </div>
+              <JSONRenderer data={item} level={level + 1} />
+            </div>
+          )
+        })}
+        {!isSingleItemMode && isTrimmed && (
           <div className="text-xs text-muted-foreground pl-3 py-2">
-            ... and {data.length - trimLimit} more items.{" "}
+            ... and {data.length - trimLimit!} more items.{" "}
             <button
               onClick={() => setTrimLimit(null)}
               className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
