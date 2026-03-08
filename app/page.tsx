@@ -49,7 +49,114 @@ const StringValue = ({ value }: { value: string }) => {
   )
 }
 
-const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
+const TRIM_OPTIONS = [1, 5, 10, 20, 50, 100]
+
+const ArrayRenderer = ({
+  data,
+  level,
+  onUpdateInput,
+}: {
+  data: any[]
+  level: number
+  onUpdateInput?: (trimmedData: any[]) => void
+}) => {
+  const [isOpen, setIsOpen] = useState(level < 2)
+  const [trimLimit, setTrimLimit] = useState<number | null>(null)
+
+  const displayedItems = trimLimit ? data.slice(0, trimLimit) : data
+  const isTrimmed = trimLimit !== null && trimLimit < data.length
+
+  const handleUpdateInput = () => {
+    if (onUpdateInput && trimLimit) {
+      onUpdateInput(displayedItems)
+    }
+  }
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
+          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <span className="font-mono text-purple-600 dark:text-purple-400">
+            Array ({isTrimmed ? `${trimLimit} of ${data.length}` : `${data.length}`} items)
+          </span>
+        </CollapsibleTrigger>
+        {data.length > 1 && (
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground">Show:</span>
+            {TRIM_OPTIONS.filter((n) => n < data.length).map((n) => (
+              <button
+                key={n}
+                onClick={() => setTrimLimit(trimLimit === n ? null : n)}
+                className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
+                  trimLimit === n
+                    ? "bg-purple-600 text-white"
+                    : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              onClick={() => setTrimLimit(null)}
+              className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
+                trimLimit === null
+                  ? "bg-purple-600 text-white"
+                  : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
+              }`}
+            >
+              All
+            </button>
+            {isTrimmed && onUpdateInput && (
+              <button
+                onClick={handleUpdateInput}
+                className="ml-2 px-2 py-0.5 rounded cursor-pointer transition-colors bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Update Input
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <CollapsibleContent className="ml-4 mt-2 space-y-2 relative">
+        {isOpen && (
+          <div
+            className="absolute left-0 top-0 bottom-0 w-2 bg-muted hover:bg-muted-foreground/20 cursor-pointer transition-colors"
+            onClick={() => setIsOpen(false)}
+            title="Click to collapse"
+          />
+        )}
+        {displayedItems.map((item, index) => (
+          <div key={index} className="border-l-2 border-muted pl-3">
+            <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
+            <JSONRenderer data={item} level={level + 1} />
+          </div>
+        ))}
+        {isTrimmed && (
+          <div className="text-xs text-muted-foreground pl-3 py-2">
+            ... and {data.length - trimLimit} more items.{" "}
+            <button
+              onClick={() => setTrimLimit(null)}
+              className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+            >
+              Show all
+            </button>
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+const JSONRenderer = ({
+  data,
+  level = 0,
+  onUpdateInput,
+}: {
+  data: any
+  level?: number
+  onUpdateInput?: (trimmedData: any[]) => void
+}) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
 
   if (typeof data === "string") {
@@ -61,29 +168,7 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   }
 
   if (Array.isArray(data)) {
-    return (
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
-          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <span className="font-mono text-purple-600 dark:text-purple-400">Array ({data.length} items)</span>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="ml-4 mt-2 space-y-2 relative">
-          {isOpen && (
-            <div
-              className="absolute left-0 top-0 bottom-0 w-2 bg-muted hover:bg-muted-foreground/20 cursor-pointer transition-colors"
-              onClick={() => setIsOpen(false)}
-              title="Click to collapse"
-            />
-          )}
-          {data.map((item, index) => (
-            <div key={index} className="border-l-2 border-muted pl-3">
-              <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
-              <JSONRenderer data={item} level={level + 1} />
-            </div>
-          ))}
-        </CollapsibleContent>
-      </Collapsible>
-    )
+    return <ArrayRenderer data={data} level={level} onUpdateInput={onUpdateInput} />
   }
 
   if (typeof data === "object" && data !== null) {
@@ -183,6 +268,17 @@ export default function TextConverter() {
   const convertedText = isJSON || isJSONL ? null : inputText.replace(/\\n/g, "\n")
   const jsonData = isJSON ? processJSON(inputText) : null
   const jsonlData = isJSONL ? processJSONL(inputText) : null
+
+  const handleUpdateInputFromArray = (trimmedData: any[]) => {
+    if (isJSONL) {
+      // Convert trimmed array back to JSONL format
+      const newJsonl = trimmedData.map((item) => JSON.stringify(item)).join("\n")
+      setInputText(newJsonl)
+    } else if (isJSON) {
+      // For JSON, just stringify the trimmed array
+      setInputText(JSON.stringify(trimmedData, null, 2))
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background p-6 flex flex-col">
@@ -310,13 +406,13 @@ JSONL example:
                           <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
                             Line {index + 1}
                           </div>
-                          <JSONRenderer data={item} />
+                          <JSONRenderer data={item} onUpdateInput={handleUpdateInputFromArray} />
                         </div>
                       ))}
                     </div>
                   ) : isJSON && jsonData ? (
                     <div className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
-                      <JSONRenderer data={jsonData} />
+                      <JSONRenderer data={jsonData} onUpdateInput={handleUpdateInputFromArray} />
                     </div>
                   ) : (
                     <Textarea
