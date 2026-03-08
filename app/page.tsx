@@ -49,6 +49,83 @@ const StringValue = ({ value }: { value: string }) => {
   )
 }
 
+const TRIM_OPTIONS = [5, 10, 20, 50, 100]
+
+const ArrayRenderer = ({ data, level }: { data: any[]; level: number }) => {
+  const [isOpen, setIsOpen] = useState(level < 2)
+  const [trimLimit, setTrimLimit] = useState<number | null>(null)
+
+  const displayedItems = trimLimit ? data.slice(0, trimLimit) : data
+  const isTrimmed = trimLimit !== null && trimLimit < data.length
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
+          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <span className="font-mono text-purple-600 dark:text-purple-400">
+            Array ({isTrimmed ? `${trimLimit} of ${data.length}` : `${data.length}`} items)
+          </span>
+        </CollapsibleTrigger>
+        {data.length > 5 && (
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground">Show:</span>
+            {TRIM_OPTIONS.filter((n) => n < data.length).map((n) => (
+              <button
+                key={n}
+                onClick={() => setTrimLimit(trimLimit === n ? null : n)}
+                className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
+                  trimLimit === n
+                    ? "bg-purple-600 text-white"
+                    : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              onClick={() => setTrimLimit(null)}
+              className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
+                trimLimit === null
+                  ? "bg-purple-600 text-white"
+                  : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
+              }`}
+            >
+              All
+            </button>
+          </div>
+        )}
+      </div>
+      <CollapsibleContent className="ml-4 mt-2 space-y-2 relative">
+        {isOpen && (
+          <div
+            className="absolute left-0 top-0 bottom-0 w-2 bg-muted hover:bg-muted-foreground/20 cursor-pointer transition-colors"
+            onClick={() => setIsOpen(false)}
+            title="Click to collapse"
+          />
+        )}
+        {displayedItems.map((item, index) => (
+          <div key={index} className="border-l-2 border-muted pl-3">
+            <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
+            <JSONRenderer data={item} level={level + 1} />
+          </div>
+        ))}
+        {isTrimmed && (
+          <div className="text-xs text-muted-foreground pl-3 py-2">
+            ... and {data.length - trimLimit} more items.{" "}
+            <button
+              onClick={() => setTrimLimit(null)}
+              className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+            >
+              Show all
+            </button>
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
 const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   const [isOpen, setIsOpen] = useState(level < 2) // Auto-expand first 2 levels
 
@@ -61,29 +138,7 @@ const JSONRenderer = ({ data, level = 0 }: { data: any; level?: number }) => {
   }
 
   if (Array.isArray(data)) {
-    return (
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded cursor-pointer">
-          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <span className="font-mono text-purple-600 dark:text-purple-400">Array ({data.length} items)</span>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="ml-4 mt-2 space-y-2 relative">
-          {isOpen && (
-            <div
-              className="absolute left-0 top-0 bottom-0 w-2 bg-muted hover:bg-muted-foreground/20 cursor-pointer transition-colors"
-              onClick={() => setIsOpen(false)}
-              title="Click to collapse"
-            />
-          )}
-          {data.map((item, index) => (
-            <div key={index} className="border-l-2 border-muted pl-3">
-              <div className="text-xs text-muted-foreground mb-1">[{index}]</div>
-              <JSONRenderer data={item} level={level + 1} />
-            </div>
-          ))}
-        </CollapsibleContent>
-      </Collapsible>
-    )
+    return <ArrayRenderer data={data} level={level} />
   }
 
   if (typeof data === "object" && data !== null) {
