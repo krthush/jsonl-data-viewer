@@ -74,6 +74,10 @@ const ArrayRenderer = ({
       : data
   const isTrimmed = (trimLimit !== null && trimLimit < data.length) || isSingleItemMode
 
+  // Determine which button should be highlighted
+  const effectiveLimit = isSingleItemMode ? 1 : trimLimit
+  const isShowingAll = !isSingleItemMode && trimLimit === null
+
   const handleUpdateInput = () => {
     if (onUpdateInput) {
       onUpdateInput(displayedItems)
@@ -91,7 +95,7 @@ const ArrayRenderer = ({
 
   const handleTrimSelect = (n: number | null) => {
     setSingleItemIndex(null)
-    setTrimLimit(n === trimLimit ? null : n)
+    setTrimLimit(n === trimLimit && !isSingleItemMode ? null : n)
   }
 
   return (
@@ -117,7 +121,7 @@ const ArrayRenderer = ({
                 key={n}
                 onClick={() => handleTrimSelect(n)}
                 className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                  trimLimit === n && !isSingleItemMode
+                  effectiveLimit === n
                     ? "bg-purple-600 text-white"
                     : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
                 }`}
@@ -128,7 +132,7 @@ const ArrayRenderer = ({
             <button
               onClick={() => handleTrimSelect(null)}
               className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                trimLimit === null && !isSingleItemMode
+                isShowingAll
                   ? "bg-purple-600 text-white"
                   : "bg-muted hover:bg-muted-foreground/20 text-muted-foreground"
               }`}
@@ -153,17 +157,6 @@ const ArrayRenderer = ({
             onClick={() => setIsOpen(false)}
             title="Click to collapse"
           />
-        )}
-        {isSingleItemMode && (
-          <div className="text-xs text-muted-foreground pl-3 py-1 flex items-center gap-2">
-            <span>Showing only item [{singleItemIndex}]</span>
-            <button
-              onClick={handleClearSingleItem}
-              className="text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
-            >
-              Show all
-            </button>
-          </div>
         )}
         {displayedItems.map((item, displayIndex) => {
           const actualIndex = isSingleItemMode ? singleItemIndex! : displayIndex
@@ -266,6 +259,7 @@ export default function TextConverter() {
   const [inputText, setInputText] = useState("")
   const [isInputExpanded, setIsInputExpanded] = useState(false)
   const [defaultDepth, setDefaultDepth] = useState(1)
+  const [renderKey, setRenderKey] = useState(0)
 
   const isValidJSON = (text: string): boolean => {
     try {
@@ -340,6 +334,8 @@ export default function TextConverter() {
       // For JSON, just stringify the trimmed array
       setInputText(JSON.stringify(trimmedData, null, 2))
     }
+    // Force re-render to reapply depth settings
+    setRenderKey((prev) => prev + 1)
   }
 
   return (
@@ -482,7 +478,7 @@ JSONL example:
                         : "Converted text with actual line breaks:"}
                   </Label>
                   {isJSONL && jsonlData ? (
-                    <div key={defaultDepth} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
+                    <div key={`${defaultDepth}-${renderKey}`} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto space-y-4">
                       {jsonlData.map((item, index) => (
                         <div key={index} className="border-l-4 border-blue-500 pl-4">
                           <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2">
@@ -493,7 +489,7 @@ JSONL example:
                       ))}
                     </div>
                   ) : isJSON && jsonData ? (
-                    <div key={defaultDepth} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
+                    <div key={`${defaultDepth}-${renderKey}`} className="min-h-[300px] p-4 border rounded-md bg-muted/20 overflow-auto">
                       <JSONRenderer data={jsonData} onUpdateInput={handleUpdateInputFromArray} defaultDepth={defaultDepth} />
                     </div>
                   ) : (
