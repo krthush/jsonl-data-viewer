@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronRight, Expand, Minimize, Upload } from "lucide-react"
+import { ChevronDown, ChevronRight, Expand, Minimize, Upload, Sparkles } from "lucide-react"
 
 const MAX_STRING_LENGTH = 100
 
@@ -313,6 +313,30 @@ export default function TextConverter() {
     }
   }
 
+  const handleBeautify = () => {
+    const text = inputText.trim()
+    if (!text) return
+
+    // Try JSONL first (multiple lines, each valid JSON)
+    if (isValidJSONL(text)) {
+      const beautified = text
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((line) => JSON.stringify(JSON.parse(line.trim()), null, 2))
+        .join("\n")
+      setInputText(beautified)
+      return
+    }
+
+    // Try single JSON
+    if (isValidJSON(text)) {
+      setInputText(JSON.stringify(JSON.parse(text), null, 2))
+      return
+    }
+  }
+
+  const canBeautify = isValidJSON(inputText.trim()) || isValidJSONL(inputText.trim())
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -374,6 +398,16 @@ export default function TextConverter() {
                     {isJSON && <Badge variant="secondary">JSON Detected</Badge>}
                   </CardTitle>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBeautify}
+                      disabled={!canBeautify}
+                      className="flex items-center gap-2 bg-transparent"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Beautify
+                    </Button>
                     <div className="relative">
                       <input
                         type="file"
